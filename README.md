@@ -1,236 +1,212 @@
-# User Management API
+# Laravel API Application
 
-## This guide will help you set up, run, and test a Laravel application with
+This project is a Laravel-based RESTful API for user management, including features such as user registration, login, logout, profile management, and CRUD operations for users.
 
-1. authentication features, including login,
-2. registration,
-3. profile viewing, and l
-4. ogout functionalities.
+## Features
+
+-   User registration with validation
+-   User login and authentication using Laravel Sanctum
+-   User logout
+-   Profile retrieval for authenticated users
+-   CRUD operations for users (create, read, update, delete)
 
 ## Prerequisites
 
-Ensure the following are installed on your system:
+Before running this application, ensure you have the following installed on your machine:
 
-1. PHP (≥ 8.1)
-2. Composer
-3. Postgres or another supported database
-4. Postman or another API testing tool (optional)
-5. Laravel Installer (optional, use Composer if not installed)
+-   PHP (>= 8.1)
+-   Composer
+-   Laravel Framework (>= 11.x)
+-   MySQL or another supported database
+-   Node.js and npm (for frontend dependencies if applicable)
 
-# Steps to Set Up and Test the Application
+## Getting Started
 
-6. Clone or Create the Laravel Application
+Follow these steps to clone, set up, and test the application.
 
-### Clone an existing Laravel project
+### 1. Clone the Repository
 
-```git
-   git clone https://github.com/Moses-main/user-mgt-api.git
+```bash
+    git clone https://github.com/Moses-main/user-mgt-api.git
+
+    cd user-mgt-api
 ```
 
-### Navigate into the project directory
+# 2. Install Dependencies
 
-````cmd
-cd user-mgt-api ```
+Install PHP dependencies using Composer:
 
-2.  Install Dependencies
-    bash
-    Copy code
-    composer install 3. Configure Environment Variables
-    Copy the .env.example file to .env and update the database credentials.
+```bash
+composer install
+```
 
-bash
-Copy code
+# 3. Set Up Environment Variables
+
+Copy the .env.example file to .env:
+
+```bash
 cp .env.example .env
-Edit the .env file:
 
-env
-Copy code
-APP_NAME=LaravelAPI
+```
+
+Upadate the <code>.env </code> file with your database credentials and other configurations. Example:
+
+```bash
+APP_NAME=Laravel
 APP_ENV=local
-APP_KEY=base64:GENERATED_KEY
+APP_KEY=base64:randomkeyhere
 APP_DEBUG=true
-APP_URL=http://127.0.0.1:8000
+APP_URL=http://localhost
 
-DB_CONNECTION=mysql
+DB_CONNECTION=postgres
 DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=your_database_name
+DB_PORT=5432
+DB_DATABASE=yorootur_database_name
 DB_USERNAME=your_database_user
-DB_PASSWORD=your_database_password 4. Generate the Application Key
-bash
-Copy code
-php artisan key:generate 5. Run Migrations
-Set up the database schema.
-
-bash
-Copy code
-php artisan migrate 6. Install Laravel Sanctum
-Sanctum provides API token authentication.
-
-bash
-Copy code
-composer require laravel/sanctum
-Publish the Sanctum configuration:
-
-bash
-Copy code
-php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
-Run the Sanctum migrations:
-
-bash
-Copy code
-php artisan migrate 7. Update User Model
-Ensure the User model uses the HasApiTokens trait for Sanctum:
-
-php
-Copy code
-namespace App\Models;
-
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
-
-class User extends Authenticatable
-{
-use HasApiTokens, Notifiable;
-} 8. Define API Routes
-Add the following to your routes/api.php file:
-
-php
-Copy code
-use App\Http\Controllers\AuthController;
-
-// Authentication routes
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
-Route::middleware('auth:sanctum')->get('/user/profile', [AuthController::class, 'profile']); 9. Create the AuthController
-Create a new controller for authentication logic:
-
-bash
-Copy code
-php artisan make:controller AuthController
-Add the following methods to AuthController:
-
-php
-Copy code
-namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use App\Models\User;
-
-class AuthController extends Controller
-{
-public function register(Request $request)
-{
-$validatedData = $request->validate([
-'name' => 'required|string|max:255',
-'email' => 'required|string|email|max:255|unique:users',
-'password' => 'required|string|min:8|confirmed',
-]);
-
-       $user = User::create([
-           'name' => $validatedData['name'],
-           'email' => $validatedData['email'],
-           'password' => Hash::make($validatedData['password']),
-       ]);
-
-       return response()->json(['message' => 'User registered successfully', 'user' => $user], 201);
-
-}
-
-public function login(Request $request)
-{
-$validatedData = $request->validate([
-'email' => 'required|string|email',
-'password' => 'required|string|min:8',
-]);
-
-       $user = User::where('email', $validatedData['email'])->first();
-
-       if (!$user || !Hash::check($validatedData['password'], $user->password)) {
-           return response()->json(['message' => 'Invalid credentials'], 401);
-       }
-
-       $token = $user->createToken('authToken')->plainTextToken;
-
-       return response()->json(['message' => 'Login successful', 'token' => $token], 200);
-
-}
-
-public function logout(Request $request)
-{
-$request->user()->currentAccessToken()->delete();
-return response()->json(['message' => 'Logged out successfully'], 200);
-}
-
-public function profile(Request $request)
-   {
-       if (!$request->user()) {
-return response()->json(['message' => 'Unauthorized. Please login to get an access token.'], 401);
-}
-
-       return response()->json(['user' => $request->user()], 200);
-
-}
-
-} 10. Start the Application
-Run the application server:
-
-bash
-Copy code
-php artisan serve 11. Test the API
-Using Postman or cURL:
-Register User
-
-Endpoint: POST /api/register
-Body (JSON):
-json
-Copy code
-{
-"name": "John Doe",
-"email": "john.doe@example.com",
-"password": "password123",
-"password_confirmation": "password123"
-}
-Login User
-
-Endpoint: POST /api/login
-Body (JSON):
-json
-Copy code
-{
-"email": "john.doe@example.com",
-"password": "password123"
-}
-Response:
-json
-Copy code
-{
-"message": "Login successful",
-"token": "your-generated-token"
-}
-View Profile
-
-Endpoint: GET /api/user/profile
-Headers:
-makefile
-Copy code
-Authorization: Bearer your-generated-token
-Logout
-
-Endpoint: POST /api/logout
-Headers:
-makefile
-Copy code
-Authorization: Bearer your-generated-token
-
-````
+DB_PASSWORD=your_database_password
 
 ```
 
-```
+# 4 Generate Application Key
+
+Run the following command to generate the application key
+
+```bash
+php artisan key:generate
 
 ```
 
+# 5. Run Database Migrations
+
+Run migrations to set up the database tables:
+
+```bash
+php artisan migrate
+```
+
+# 6. Start the Development Server
+
+Start the Laravel development server:
+
+```bash
+php artisan serve
+
+```
+
+The application will be accessible at http://127.0.0.1:8000.
+
+# 7. Testing the API
+
+You can test the API endpoints using a tool like Postman or cURL. Below are the available endpoints:
+
+## Public Endpoints
+
+### 1. Register a User
+
+```bash
+POST /api/register
+```
+
+Payload:
+
+```json
+{
+    "name": "John Doe",
+    "email": "johndoe@example.com",
+    "password": "password",
+    "password_confirmation": "password"
+}
+```
+
+### 2. Login
+
+```bash
+POST /api/login
+```
+
+Payload:
+
+```json
+{
+    "email": "johndoe@example.com",
+    "password": "password"
+}
+```
+
+### 3. Get a specific User
+
+```bash
+GET api/users/{id}
+```
+
+### Protected Endpoints (Requires Authentication)
+
+Include the Authorization header with the token received from login:
+
+```makefile
+Authorization: Bearer <token>
+
+```
+
+### 1. Get User Profile
+
+```bash
+GET api/user/profile
+```
+
+### 2. Logout
+
+```bash
+POST api/logout
+```
+
+### 3. List All Users
+
+```bash
+GET api/users
+```
+
+### 4. Update a user
+
+```bash
+PUT api/users/{id}
+```
+
+Payload:
+
+```json
+{
+    "name": "Updated Name",
+    "email": "updatedemail@example.com"
+}
+```
+
+### 5. Delete a User
+
+```bash
+DELETE api/users/{id}
+```
+
+---
+
+## License
+
+This Project is licensed under the MIT License
+
+---
+
+## Contributing
+
+Contributions are welcome! Please fork this repository, make your changes, and submit a pull request.
+
+## Support
+
+If you encounter any issues or have questions, feel free to open an issue or contact me directly.
+
+```markdown
+### Notes:
+
+1. Replace `yourusername` in the `git clone` URL with your actual GitHub username or repository URL.
+2. Customize any details specific to your project.
+3. Include a license file if applicable (e.g., `LICENSE`).
 ```
